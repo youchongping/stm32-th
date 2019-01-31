@@ -29,8 +29,8 @@ static void ILI9488_SetCursor(uint16_t _usX, uint16_t _usY);
 
 static void ILI9488_WriteCmd(uint8_t _ucCmd);
 static void ILI9488_WriteParam(uint8_t _ucParam);
-
-
+#define IC_9488 	0x9488
+uint16_t g_ChipID = IC_9488;		
 uint16_t g_LcdHeight = 320;			
 uint16_t g_LcdWidth = 480;		
 uint8_t s_ucBright;					

@@ -10,7 +10,6 @@
 #include "gui_task.h"
 #include "key.h"
 #include "led.h"
-#include "ft6x06.h"
 #include "uart_dma.h"
 #include "bsp_ds18b20.h"
 #include "timer.h"
@@ -18,6 +17,10 @@
 #include "event_groups.h"
 #include "biss_ir.h"
 #include "lcd.h"
+#include "bsp_ts_ft5x06.h"
+#include "bsp_i2c_gpio.h"
+#include "bsp_touch.h"
+
 SemaphoreHandle_t  xMutex = NULL;
 QueueHandle_t public_queque = NULL;
 QueueHandle_t cc1101_queque = NULL;
@@ -57,12 +60,14 @@ void bsp_init(void)
   //IWDG_Init(12000);//max time 12000ms
 	serial_init();
 	TIM3_Int_Init();
+	TIM2_Int_Init();
   ds18b20_init();
-	//FT5216_Init();
   led_gpio_init();	
 	set_green_led(ON);
 	set_red_led(ON);
 	biss_ir_init();
+	bsp_InitI2C();
+	TOUCH_InitHard();
 	
 }
 static void gui_task(void *pvParameters)
@@ -88,19 +93,31 @@ void human_detect_task(void* param )
 		vTaskDelay(100 / portTICK_RATE_MS);
 	}
 }
+
+void tp_task(void *param)
+{  
+  while(1)
+   {
+		if(g_tFT5X06.Enable == 1)
+		{
+				FT5X06_OnePiontScan();
+		}
+		vTaskDelay(10 / portTICK_RATE_MS);
+	}
+}
 int main(void)
 {
-	app_ObjCreate();
-	bsp_init();
-	app_printf("bsp_init ok!\n");
-  xTaskCreate(uart_task,"uart_task",256,NULL,6,NULL);
-	xTaskCreate(human_detect_task,"human_detect_task",256,NULL,6,NULL);
-	xTaskCreate(gui_task,"gui_task",2048,NULL,2,NULL);
-	xTaskCreate(key_task,"key_task",1024,NULL,6,NULL);
-	xTaskCreate(led_task,"alive_check_task",256,NULL,6,NULL);
-	xTaskCreate(cc1101_task,"cc1101_task",1024,NULL,7,NULL);
-	vTaskStartScheduler();
-	
-	
+		app_ObjCreate();
+		bsp_init();
+		app_printf("bsp_init ok!\n");
+		xTaskCreate(uart_task,"uart_task",256,NULL,6,NULL);
+		xTaskCreate(human_detect_task,"human_detect_task",256,NULL,6,NULL);
+		xTaskCreate(gui_task,"gui_task",2048,NULL,2,NULL);
+		xTaskCreate(key_task,"key_task",1024,NULL,6,NULL);
+		xTaskCreate(led_task,"alive_check_task",256,NULL,6,NULL);
+		xTaskCreate(cc1101_task,"cc1101_task",1024,NULL,7,NULL);
+		xTaskCreate(tp_task,"tp_task",256,NULL,7,NULL);
+		vTaskStartScheduler();
+		
 }
 

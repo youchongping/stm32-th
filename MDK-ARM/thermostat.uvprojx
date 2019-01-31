@@ -430,16 +430,6 @@
               <FilePath>..\user\driver\sys.c</FilePath>
             </File>
             <File>
-              <FileName>ctiic.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\user\driver\ctiic.c</FilePath>
-            </File>
-            <File>
-              <FileName>ft6x06.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\user\driver\ft6x06.c</FilePath>
-            </File>
-            <File>
               <FileName>led.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\driver\led.c</FilePath>
@@ -478,6 +468,21 @@
               <FileName>biss_ir.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\driver\biss_ir.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_i2c_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\bsp_i2c_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_touch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\bsp_touch.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_ts_ft5x06.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\bsp_ts_ft5x06.c</FilePath>
             </File>
           </Files>
         </Group>

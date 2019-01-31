@@ -25,6 +25,11 @@
 #define ILI9488_REG		LCD_REG16
 #define ILI9488_RAM		LCD_DAT16	
 
+extern uint16_t g_ChipID;
+extern uint16_t g_LcdHeight;			
+extern uint16_t g_LcdWidth ;		
+extern uint8_t s_ucBright;					
+extern uint8_t g_LcdDirection;	
 		
 
 /* 可供外部模块调用的函数 */

@@ -4,6 +4,7 @@
 #include "task.h"
 #include "event_groups.h"
 #include "main.h"
+#include "timer.h"
 void GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 {
   /* Check the parameters */
