@@ -113,7 +113,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'Window'
     //
     hItem = pMsg->hWin;
-    WINDOW_SetBkColor(hItem, GUI_MAKE_COLOR(GUI_BROWN));
+    WINDOW_SetBkColor(hItem, GUI_MAKE_COLOR(GUI_DARKRED));
     //
     // Initialization of '00'
     //
@@ -212,7 +212,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		  TEXT_SetText(hItem,current_temp);
 		  hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
 		  memset(current_temp,0,sizeof(current_temp));
-		  sprintf(current_temp,".%d",tempratrue_now%10);
+		  sprintf(current_temp,".%d",(int)((tempratrue_now%16)*10/16));
 		  TEXT_SetText(hItem,current_temp);
 		break;
   // USER END

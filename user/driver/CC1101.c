@@ -11,10 +11,12 @@
 #include "timers.h"
 #include "main.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "main.h"
 //GDO0 PC5
 #define CC1101_GDO0_GPIO_PORT           GPIOC
 #define CC1101_GDO0_GPIO_PINS           GPIO_Pin_5
-#define CC1101_GDO0_EXTI_PORT_SRC       GPIO_PortSourceGPIOB
+#define CC1101_GDO0_EXTI_PORT_SRC       GPIO_PortSourceGPIOC
 #define CC1101_GDO0_EXTI_PIN_SRC        GPIO_PinSource5
 #define CC1101_GDO0_EXTI_LINE           EXTI_Line5
 #define CC1101_GDO0_EXTI_TRIGGER        EXTI_Trigger_Falling
@@ -43,7 +45,6 @@
 #define CC1101_CSN_SET_LOW()            (GPIO_ResetBits(CC1101_CSN_GPIO_PORT,CC1101_CSN_GPIO_PINS))
 #define CC1101_CSN_SET_HIGH()           (GPIO_SetBits(CC1101_CSN_GPIO_PORT,CC1101_CSN_GPIO_PINS))
 
-#define TIME_CC1101_NORESPOND           ((uint32_t)60*OS_TMR_CFG_TICKS_PER_SEC)     // 1min
 
 const RF_SETTINGS rfSettings = {
     0x2F,  // IOCFG2        GDO2 Output Pin Configuration
@@ -98,31 +99,80 @@ static uint8_t CC1101_ReadReg(uint8_t u8Addr);
 static void CC1101_ReadRegs(uint8_t u8Addr,uint8_t *pu8Data,uint8_t u8Len);
 static void CC1101_SendCmd(uint8_t u8Cmd);
 static void CC1101_RegInit(RF_SETTINGS *pRfSettings);
-static void t_cc1101_norespond_clear_callback( xTimerHandle  xTimer );
-static void CC1101_GDO0_ISR(void);
-//------------------------------------------------------------------------------
+static void t_cc1101_no_respond_clear_callback( xTimerHandle  xTimer );
 
-#if 1
-void Task_CC1101(void *p_arg)
+//------------------------------------------------------------------------------
+CC1101_PACKET cc1101_rx_buff;
+CC1101_PACKET cc1101_tx_test ;
+RUNNING_PARAM RunningParam;
+void cc1101_task(void *param)
 {
-  CC1101_PACKET *pPacket;
-  uint8_t u8Err;
-  
+  CC1101_PACKET *pPacket ;
+
+  uint16_t return_bits;
   CC1101_Config();
   CC1101_EnterRXMode();
-  
-
+  printf("cc1101 enter rx mode \r\n");
+	memset(&cc1101_tx_test,0,sizeof(cc1101_tx_test));
+	memcpy(cc1101_tx_test.u8Buff,"hello cc1101",strlen("hello cc1101"));
+	cc1101_tx_test.u8DataLen = strlen("hello cc1101");
 	//
 	if(t_cc1101_norespond_clear_timer == NULL)
-        t_cc1101_norespond_clear_timer = xTimerCreate("t_cc1101_norespond_clear_timer ",  (1*1000)/portTICK_RATE_MS, pdTRUE, ( void * ) 0, t_cc1101_norespond_clear_callback);
+        t_cc1101_norespond_clear_timer = xTimerCreate("t_cc1101_norespond_clear_timer ",  60*1000/portTICK_RATE_MS, pdTRUE, ( void * ) 0, t_cc1101_no_respond_clear_callback);
 	if(t_cc1101_norespond_clear_timer != NULL)
-				xTimerStart( t_cc1101_norespond_clear_timer, 0 );
-	
+		xTimerStart( t_cc1101_norespond_clear_timer, 0 );
 
+  return_bits = xEventGroupWaitBits(cc1101_event_group, FLAG_TEST_MODE,  pdTRUE,  pdFALSE,  0);
+  if(return_bits & FLAG_TEST_MODE)
+  {
+        CC1101_ChangeRFCH(CC1101_RF_CH_TEST);
+  }
+  else if(RunningParam.sRFCH.bRFCHSet)
+    CC1101_ChangeRFCH(RunningParam.sRFCH.u2RFCH);
+  else
+  {
+    uint8_t u8Temp = 3;//rand()&0x3;
+    //RunningParam_WriteRFCH(u8Temp);
+		RunningParam.sRFCH.u2RFCH = u8Temp&0x03;
+    CC1101_ChangeRFCH(RunningParam.sRFCH.u2RFCH);
+  }
   
+  while(1)
+  {
+
+		if(xQueueReceive(cc1101_queque, (void*)&pPacket , 0) == pdTRUE)
+		{
+			
+		}
+    if(pPacket != NULL)
+    {
+#if (DBG_PRINT_PACKET_INFO == 1)
+      USART1_SendByte('s');
+#endif
+      CC1101_SendPacket(pPacket->u8Buff,pPacket->u8DataLen);
+      CC1101_EnterRXMode();
+      memset(&cc1101_rx_buff,0,sizeof(cc1101_rx_buff));
+	    memcpy(&cc1101_rx_buff,pPacket,sizeof(cc1101_rx_buff));
+			pPacket = NULL;
+    }
+     return_bits = xEventGroupWaitBits(cc1101_event_group, FLAG_CC1101_RECV_PACKET,  pdTRUE,  pdFALSE,  0);
+     if((return_bits & FLAG_CC1101_RECV_PACKET) == FLAG_CC1101_RECV_PACKET)
+     {
+        CC1101_ReadPacket();
+     }
+
+     return_bits = xEventGroupWaitBits(cc1101_event_group, FLAG_CC1101_RESPOND,  pdTRUE,  pdFALSE,  0);
+     if((return_bits & FLAG_CC1101_RESPOND) == FLAG_CC1101_RESPOND )
+     {
+        xEventGroupSetBits(cc1101_event_group,FLAG_CC1101_RESPOND);
+        xTimerStart( t_cc1101_norespond_clear_timer, 0 );
+     }   
+    
+    vTaskDelay(10 / portTICK_RATE_MS);
+	}
 
 }
-#endif
+
 void CC1101_Config(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure = {.GPIO_Speed = GPIO_Speed_50MHz,};
@@ -187,10 +237,13 @@ void CC1101_Config(void)
   // GDO0 Interrupt
   GPIO_EXTILineConfig(CC1101_GDO0_EXTI_PORT_SRC,CC1101_GDO0_EXTI_PIN_SRC);
   EXTI_Init((EXTI_InitTypeDef*)&EXTI_InitStructure);
-  /*
-	BSP_IntVectSet(CC1101_GDO0_EXTI_ID,CC1101_GDO0_ISR);
-  BSP_IntEn(CC1101_GDO0_EXTI_ID);
-	*/
+
+	NVIC_InitTypeDef 	NVIC_InitStructure;
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn; 
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 6; 
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 
+	NVIC_Init(&NVIC_InitStructure);
 }
 
 static void CC1101_WriteReg(uint8_t u8Addr,uint8_t u8Data)
@@ -408,13 +461,15 @@ ret_cc1101_sendpacket:
   CC1101_SendCmd(CC1101_SIDLE);
   ge_CC1101_Mode = CC_MODE_IDLE;
 }
-#if 0
+
 void CC1101_ReadPacket(void)
 {
-  uint8_t u8PacketLen,u8ReadCnt,u8Temp,u8Err;
+  uint8_t u8PacketLen,u8ReadCnt,u8Temp;
   uint16_t u16Cnt;
   uint8_t u8Status[2];  // status[0]-RSSI;status[1]-LQI
   CC1101_PACKET *pPacket;
+	pPacket = (CC1101_PACKET* )pvPortMalloc(sizeof(CC1101_PACKET));
+	memset(pPacket,0,sizeof(CC1101_PACKET));
   // Wait while RXBYTES==0
   u16Cnt = CC1101_TRANS_PACKET_TIMEOUT;
   while(--u16Cnt)
@@ -423,17 +478,17 @@ void CC1101_ReadPacket(void)
     if(u8Temp)
       break;
     else
-      OSTimeDly(1);
+      vTaskDelay(10 / portTICK_RATE_MS);
   }
-  if(u8Temp)
+	 if(u8Temp)
   {
-    OSFlagPost(F_SYS_STATE,FLAG_CC1101_RESPOND,OS_FLAG_SET,&u8Err);
-    pPacket = OSMemGet(M_CC1101_BUFF,&u8Err);
-    if((pPacket == NULL)||(u8Err != OS_NO_ERR))
+		xEventGroupSetBits(cc1101_event_group,FLAG_CC1101_RESPOND);
+		
+    if(pPacket == NULL)
       goto ret_cc1101_readpacket;
     u8PacketLen = CC1101_ReadReg(CC1101_RXFIFO);
     if((u8PacketLen > CC1101_PACKET_SIZE)||(u8PacketLen == 0))
-      OSMemPut(M_CC1101_BUFF,pPacket);
+      goto ret_cc1101_readpacket;
     else
     {
       u8ReadCnt = 0;
@@ -449,40 +504,41 @@ void CC1101_ReadPacket(void)
         u16Cnt--;
         if(!u16Cnt)
         {
-          OSMemPut(M_CC1101_BUFF,pPacket);
           goto ret_cc1101_readpacket;
         }
-        OSTimeDly(1);
+        vTaskDelay(10 / portTICK_RATE_MS);
       }
       pPacket->u8DataLen=u8PacketLen;
-      CC1101_ReadRegs(CC1101_RXFIFO,u8Status,2);
-      u8Err = OSQPost(Q_CC1101_RECV,pPacket);
-      if(u8Err != OS_NO_ERR)
-        OSMemPut(M_CC1101_BUFF,pPacket);
+      CC1101_ReadRegs(CC1101_RXFIFO,u8Status,2);		
     }
   }
 ret_cc1101_readpacket:
+	memset(&cc1101_rx_buff,0,sizeof(cc1101_rx_buff));
+	memcpy(&cc1101_rx_buff,pPacket,sizeof(cc1101_rx_buff));
+	if(cc1101_rx_buff.u8DataLen)
+	{
+		printf("cc1101 rcv(len:%d):%s \r\n",cc1101_rx_buff.u8DataLen,cc1101_rx_buff.u8Buff);
+	}
   CC1101_EnterRXMode();
+	vPortFree(pPacket);
 }
-#endif
+
 void CC1101_Recovery(void)
 {
   if(CC1101_ReadStatus(CC1101_RXBYTES))
   {
-    uint8_t u8Err;
     CC1101_SendCmd(CC1101_SIDLE);
     CC1101_SendCmd(CC1101_SFRX);
-    //OSFlagPost(F_SYS_STATE,FLAG_CC1101_RECV_PACKET,OS_FLAG_CLR,&u8Err);
+    xEventGroupSetBits(cc1101_event_group,FLAG_CC1101_RECV_PACKET);
     ge_CC1101_Mode=CC_MODE_IDLE;
   }
 }
 
 inline void CC1101_EnterRXMode(void)
 {
-  uint8_t u8Err;
   CC1101_SendCmd(CC1101_SIDLE);
   CC1101_SendCmd(CC1101_SFRX);
-  //OSFlagPost(F_SYS_STATE,FLAG_CC1101_RECV_PACKET,OS_FLAG_CLR,&u8Err);
+  xEventGroupSetBits(cc1101_event_group,FLAG_CC1101_RECV_PACKET);
   vTaskDelay(20 / portTICK_RATE_MS);
   CC1101_SendCmd(CC1101_SRX);
   ge_CC1101_Mode = CC_MODE_RX;
@@ -496,27 +552,36 @@ void CC1101_ChangeRFCH(uint8_t u8RFCH)
   CC1101_WriteReg(CC1101_CHANNR,CC1101_RFCH_RegVal[u8RFCH]);
 }
 
-static void t_cc1101_norespond_clear_callback( xTimerHandle  xTimer )
+static void t_cc1101_no_respond_clear_callback( xTimerHandle  xTimer )
 {
-  uint8_t u8Err;
+  uint16_t return_bits;
 #if (DBG_PRINT_PACKET_INFO == 1)
-  USART1_SendByte('N');
+  UART_PutChar(UART_DEBUG,'N');
 #endif
-  //OSFlagAccept(F_SYS_STATE,FLAG_CC1101_RECV_PACKET,OS_FLAG_WAIT_CLR_ALL,&u8Err);
-  //if(u8Err==OS_ERR_NONE)
-  {
-    CC1101_Recovery();
-    CC1101_EnterRXMode();
-  }
+   return_bits = xEventGroupWaitBits(cc1101_event_group, FLAG_CC1101_RECV_PACKET,  pdTRUE,  pdFALSE,  0);
+   if((return_bits & FLAG_CC1101_RECV_PACKET) == FLAG_CC1101_RECV_PACKET)
+   {
+          CC1101_Recovery();
+          CC1101_EnterRXMode();
+    }
+
+  
 }
 
 void EXTI9_5_IRQHandler(void)
 {
-  uint8_t u8Err;
+	BaseType_t xResult;
+	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
   if(EXTI_GetFlagStatus(CC1101_GDO0_EXTI_LINE)==SET)
   {
     if(ge_CC1101_Mode == CC_MODE_RX)
-     // OSFlagPost(F_SYS_STATE,FLAG_CC1101_RECV_PACKET,OS_FLAG_SET,&u8Err);
+		{
+			xResult = xEventGroupSetBitsFromISR(cc1101_event_group,FLAG_CC1101_RECV_PACKET,&xHigherPriorityTaskWoken);
+		}
+		if(xResult != pdFAIL)
+		{
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+		}
     EXTI_ClearITPendingBit(CC1101_GDO0_EXTI_LINE);
   }
 }

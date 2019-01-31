@@ -10,8 +10,9 @@
 #define RED_LED_PIN		GPIO_Pin_1
 #define RED_LED_GPIO 	GPIOA
 
+
 extern  void led_gpio_init(void);
 extern void set_green_led(char state);
 extern void set_red_led(char state);
-
+extern void led_task(void* param);
 #endif

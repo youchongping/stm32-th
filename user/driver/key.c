@@ -3,6 +3,11 @@
 #include "semphr.h"
 #include "task.h"
 #include <stdio.h> 
+#include "cc1101.h"
+#include "main.h"
+
+extern CC1101_PACKET cc1101_tx_test ;
+CC1101_PACKET *p_tx_test;
 void user_reset(void)
 {
 	__set_FAULTMASK(1);
@@ -47,6 +52,8 @@ void key_deal(u8 *key_value)
 			printf("key 1 pressed \n");
 			break;
 		case KEY2_PRESSED:
+			p_tx_test = &cc1101_tx_test;
+			if(xQueueSend(cc1101_queque, (void *)&p_tx_test, 0) == pdPASS){}
 			printf("key 2 pressed \n");
 			break;
 		case KEY3_PRESSED:

@@ -5,8 +5,8 @@
 #include <string.h>
 #define UART_MAX_RECV_LEN		( 128	)				
 #define UART_MAX_SEND_LEN		( 128	)				
-#define UART_8266 USART1
-#define UART_DEBUG USART2
+#define UART_5G USART2
+#define UART_DEBUG USART3
 typedef  struct{
 	u16 rxcnt; 
 	u8 rxdata[UART_MAX_RECV_LEN];

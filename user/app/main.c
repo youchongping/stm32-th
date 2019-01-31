@@ -14,8 +14,15 @@
 #include "uart_dma.h"
 #include "bsp_ds18b20.h"
 #include "timer.h"
+#include "cc1101.h"
+#include "event_groups.h"
+#include "biss_ir.h"
+#include "lcd.h"
 SemaphoreHandle_t  xMutex = NULL;
 QueueHandle_t public_queque = NULL;
+QueueHandle_t cc1101_queque = NULL;
+EventGroupHandle_t cc1101_event_group = NULL;
+EventGroupHandle_t human_detect_event_group = NULL;
 void NVIC_Configuration(void)
 {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
@@ -23,7 +30,10 @@ void NVIC_Configuration(void)
 static void app_ObjCreate (void)
 {
   xMutex = xSemaphoreCreateMutex();
-	public_queque = xQueueCreate(4,20);	
+  public_queque = xQueueCreate(4,20);	
+  cc1101_queque = xQueueCreate(4,sizeof(CC1101_PACKET *));
+  cc1101_event_group = xEventGroupCreate();
+	human_detect_event_group = xEventGroupCreate();
 }
 void  app_printf(char *format, ...)
 {
@@ -52,6 +62,7 @@ void bsp_init(void)
   led_gpio_init();	
 	set_green_led(ON);
 	set_red_led(ON);
+	biss_ir_init();
 	
 }
 static void gui_task(void *pvParameters)
@@ -61,19 +72,21 @@ static void gui_task(void *pvParameters)
 		MainTask();
 	}
 }
-
-static void alive_check_task(void* param)
+void human_detect_task(void* param )
 {
-	set_red_led(OFF);
+	uint16_t return_bits;
 	while(1)
 	{
-		set_green_led(ON);
-		vTaskDelay(100 / portTICK_RATE_MS);
-		set_green_led(OFF);
-		vTaskDelay(1000 / portTICK_RATE_MS);
 		
+		return_bits = xEventGroupWaitBits(human_detect_event_group, EVENT_IR_DETECTED,  pdTRUE,  pdFALSE,  portMAX_DELAY);
+		if((return_bits & EVENT_IR_DETECTED) == EVENT_IR_DETECTED)
+		{
+			GPIO_WriteBit(LCD_BL_GPIO,LCD_BL_PIN,Bit_SET);
+			if(ir_timer != NULL)
+			   xTimerReset(ir_timer,0);
+		}
+		vTaskDelay(100 / portTICK_RATE_MS);
 	}
-	
 }
 int main(void)
 {
@@ -81,9 +94,11 @@ int main(void)
 	bsp_init();
 	app_printf("bsp_init ok!\n");
   xTaskCreate(uart_task,"uart_task",256,NULL,6,NULL);
-	xTaskCreate(gui_task,"gui_task",2048,NULL,4,NULL);
-	xTaskCreate(key_task,"key_task",256,NULL,6,NULL);
-	xTaskCreate(alive_check_task,"alive_check_task",256,NULL,6,NULL);
+	xTaskCreate(human_detect_task,"human_detect_task",256,NULL,6,NULL);
+	xTaskCreate(gui_task,"gui_task",2048,NULL,2,NULL);
+	xTaskCreate(key_task,"key_task",1024,NULL,6,NULL);
+	xTaskCreate(led_task,"alive_check_task",256,NULL,6,NULL);
+	xTaskCreate(cc1101_task,"cc1101_task",1024,NULL,7,NULL);
 	vTaskStartScheduler();
 	
 	

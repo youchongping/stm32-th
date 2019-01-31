@@ -136,7 +136,7 @@ typedef struct {
 
 #define CC1101_PACKET_SIZE              64
 #define CC1101_PACKET_BUFF_SIZE         4
-#define CC1101_TRANS_PACKET_TIMEOUT     500
+#define CC1101_TRANS_PACKET_TIMEOUT     100
 typedef struct
 {
   uint8_t u8DataLen;
@@ -152,9 +152,18 @@ typedef enum
   CC_MODE_SLEEP,
 }CC_MODE;
 
+typedef struct
+{
+  uint32_t u32CRC;
+  struct
+  {
+    uint8_t bRFCHSet:1;
+    uint8_t u2RFCH:2;
+    uint8_t u5Reserve:5;
+  }sRFCH;
+}RUNNING_PARAM;
 
-
-void Task_CC1101(void *p_arg);
+void cc1101_task(void *param);
 extern void CC1101_Config(void);
 extern void CC1101_SendPacket(const uint8_t *pu8Data,uint8_t u8Len);
 extern void CC1101_PowerUpReset(void);
@@ -165,7 +174,7 @@ extern void CC1101_ChangeRFCH(uint8_t u8RFCH);
 
 #define RF_BW_REG                       0xF0    // 0xF0-50kHz,0xC0-100kHz
 #define RF_TEST_CHANNEL_REG             25      // 5-431M,10-432M,15-433M,20-434M,25-435M
-#define RF_ROOT_ADDR                    0xFF
+#define RF_ROOT_ADDR                    0xFF    // 0x00 and 0xff for broadcast
 #define FLAG_CC1101_STANDBY             ((uint16_t)0x0001)      // Not Use Now
 #define FLAG_CC1101_RESPOND             ((uint16_t)0x0002)
 #define FLAG_CC1101_RECV_PACKET         ((uint16_t)0x0004)

@@ -445,11 +445,6 @@
               <FilePath>..\user\driver\led.c</FilePath>
             </File>
             <File>
-              <FileName>key.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\user\driver\key.c</FilePath>
-            </File>
-            <File>
               <FileName>LCD_ILI9488.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\driver\LCD_ILI9488.c</FilePath>
@@ -468,6 +463,21 @@
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\driver\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>CC1101.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\CC1101.c</FilePath>
+            </File>
+            <File>
+              <FileName>key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\key.c</FilePath>
+            </File>
+            <File>
+              <FileName>biss_ir.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\biss_ir.c</FilePath>
             </File>
           </Files>
         </Group>

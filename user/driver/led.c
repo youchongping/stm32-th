@@ -1,4 +1,9 @@
 #include "led.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "task.h"
+#include "event_groups.h"
+#include "main.h"
 void GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 {
   /* Check the parameters */
@@ -30,3 +35,18 @@ void set_red_led(char state)
 
 	GPIO_WriteBit(RED_LED_GPIO,RED_LED_PIN,(BitAction)state);
 }	
+
+void led_task(void* param)
+{
+	set_red_led(OFF);
+	while(1)
+	{
+		set_green_led(ON);
+		vTaskDelay(100 / portTICK_RATE_MS);
+		set_green_led(OFF);
+		vTaskDelay(1000 / portTICK_RATE_MS);
+	}
+	
+}
+
+

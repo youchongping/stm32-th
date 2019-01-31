@@ -115,8 +115,8 @@ void USART1_Configuration(void)
 	 GPIO_Init(GPIOA, &GPIO_InitStructure);  
 
 	 NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-	 NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0 ;
-	 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; 	
+	 NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=1 ;
+	 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 	
 	 NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;		 
 	 NVIC_Init(&NVIC_InitStructure); 
 
@@ -173,8 +173,8 @@ void USART1_Configuration(void)
 	  GPIO_Init(GPIOC, &GPIO_InitStructure);  
 
 	  NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
-	  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0 ;
-	  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;	 
+	  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=1 ;
+	  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;	 
 	  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;		  
 	  NVIC_Init(&NVIC_InitStructure); 
 		
@@ -283,8 +283,8 @@ void UART_PutHex(USART_TypeDef* USARTx, uint8_t *pdata,u16 datalen)
 
 int fputc(int ch, FILE *f)
 {
-	USART_SendData(USART3, (uint8_t) ch);
-	while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);
+	USART_SendData(UART_DEBUG, (uint8_t) ch);
+	while (USART_GetFlagStatus(UART_DEBUG, USART_FLAG_TXE) == RESET);
 	
 	return ch;
 }

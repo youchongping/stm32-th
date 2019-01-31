@@ -328,7 +328,7 @@ void tempratrue_measure_callback( xTimerHandle  xTimer )
 {
 	static u16 temp;
 	temp = DS18B20_ReadTempReg();
-	if(  ((temp - tempratrue_now) > 4) || ((tempratrue_now - temp) > 4) )  
+	if(tempratrue_now != temp)//(  ((temp - tempratrue_now) > 4) || ((tempratrue_now - temp) > 4) )  
 	{
 		tempratrue_now = temp;
 		if(xQueueSend(public_queque, (void *)"temp_changed", 0) == pdPASS){}
@@ -337,7 +337,7 @@ void tempratrue_measure_callback( xTimerHandle  xTimer )
 void tempratrue_measure_timer_init(void)
 {
 	if(xTimer_tempratrue_measure_timer == NULL)
-        xTimer_tempratrue_measure_timer = xTimerCreate("xTimer_tempratrue_measure_timer ",  (1*1000)/portTICK_RATE_MS, pdTRUE, ( void * ) 0, tempratrue_measure_callback);
+        xTimer_tempratrue_measure_timer = xTimerCreate("xTimer_tempratrue_measure_timer ",  (5*1000)/portTICK_RATE_MS, pdTRUE, ( void * ) 0, tempratrue_measure_callback);
 	if(xTimer_tempratrue_measure_timer != NULL)
 				xTimerStart( xTimer_tempratrue_measure_timer, 0 );
 }
@@ -345,6 +345,7 @@ void ds18b20_init(void)
 {
 	bsp_InitDS18B20();
 	tempratrue_measure_timer_init();
+	tempratrue_now = DS18B20_ReadTempReg();
 	if(xQueueSend(public_queque, (void *)"temp_changed", 0) == pdPASS){}
 }
 /***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/
