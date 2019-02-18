@@ -114,8 +114,6 @@ uint16_t FT5X06_ReadVersion(void);
 void FT5X06_OnePiontScan(void);
 void FT5X06_Scan(void);
 void FT5X06_Timer1ms(void);
-
-
 extern FT5X06_T g_tFT5X06;
 
 #endif

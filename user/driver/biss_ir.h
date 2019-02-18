@@ -13,6 +13,7 @@
 #define BISS_VOUT_EXTI_LINE       EXTI_Line2
 #define BISS_VOUT_EXTI_IRQn       EXTI2_IRQn
 
+extern u8 ir_disable;
 extern void biss_ir_init(void);
 extern xTimerHandle ir_timer;
 #endif

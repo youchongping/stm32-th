@@ -144,6 +144,10 @@ NVIC value of 255. */
 #define INCLUDE_xEventGroupSetBitFromISR 1
 #define configUSE_TIMERS 1
 #define INCLUDE_xTimerPendFunctionCall 1
+/***************************************************************************************************************/
+/*                                FreeRTOS debug                                          */
+/***************************************************************************************************************/
 
+#define INCLUDE_uxTaskGetStackHighWaterMark 0
 #endif /* FREERTOS_CONFIG_H */
 

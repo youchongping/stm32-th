@@ -4,31 +4,32 @@
 #include <string.h>
 #include "uart_dma.h"
 #include "sys.h"
-#define GIFT_Base (Page(63) )
-#define DEVID_base 0x1FFFF7E8 //DEVID起始地址 全球唯一ID
-Gift_t Gift;
+#include "timer.h"
 
 /*basic of flash*/
-#if 0
-static s8 Flash_Program_bytes(uint32_t *Address,u8 *buf,u16 *bufsize)
+#if 1
+ s8 Flash_Program_bytes(uint32_t Address,u8 *buf,u16 bufsize)
 {
 	u32 Data =0;
-	
-	 while((*bufsize)>0)
+	FLASH_Unlock();        
+	FLASH_ClearFlag(FLASH_FLAG_BSY|FLASH_FLAG_EOP|FLASH_FLAG_PGERR|FLASH_FLAG_WRPRTERR);//
+	FLASH_ErasePage(Address);
+	 while(bufsize>0)
 	 {
 		  Data=(*buf)+ ((*(buf+1))<<8) + ((*(buf+2))<<16) + ((*(buf+3))<<24);
-			FLASH_ProgramWord(*Address,Data);
+			FLASH_ProgramWord(Address,Data);
 		  delay_us(100);
-			if(FLASH_ReadWord(*Address)!=Data){return -1;}
-			(*bufsize)-=4;
+			if(FLASH_ReadWord(Address)!=Data){return -1;}
+			 bufsize-=4;
 			 buf+=4;
-			(*Address)+=4;
+			 Address+=4;
 	 }
+	 FLASH_Lock();
 	return 0;
 }
 #endif
-/*read word*/
-static uint32_t FLASH_ReadWord(uint32_t address)
+
+uint32_t FLASH_ReadWord(uint32_t address)
 {
   uint32_t temp1,temp2;
   temp1=*(__IO uint16_t*)address; 
@@ -36,25 +37,43 @@ static uint32_t FLASH_ReadWord(uint32_t address)
   return (temp2<<16)+temp1;
 }
 
-/*Application of flash*/
-s8 WriteGiftNumToFlash(u8 *num)
+/*application of flash*/
+void Read_MCU_ID(u8* id,u8 id_len)
 {
-	u32 p=0;
-	p=GIFT_Base;
-	FLASH_Unlock();         //解锁写保护
-	FLASH_ClearFlag(FLASH_FLAG_BSY|FLASH_FLAG_EOP|FLASH_FLAG_PGERR|FLASH_FLAG_WRPRTERR);//清除标志位
-	FLASH_ErasePage(p);
-	FLASH_ProgramWord((u32)p,(u32)(*num));
-	FLASH_Lock();
-	return 0;
+	u32 buffer,p;
+	u8 buf[12];
+	memset(buf,0,sizeof(buf));
+	p=MCU_ID;
+	buffer=FLASH_ReadWord(p);
+	buf[0]=buffer;
+	buf[1]=buffer>>8;
+	buf[2]=buffer>>16;
+	buf[3]=buffer>>24;
+	buffer=FLASH_ReadWord(p+4);
+	buf[4]=buffer;
+	buf[5]=buffer>>8;
+	buf[6]=buffer>>16;
+	buf[7]=buffer>>24;
+	buffer=FLASH_ReadWord(p+8);
+	buf[8]=buffer;
+	buf[9]=buffer>>8;
+	buf[10]=buffer>>16;
+	buf[11]=buffer>>24;
+	memset(id,0,id_len);
+	memcpy(id,buf,id_len);
+	
+	u8 i;
+	printf("MCU id:");
+  for(i=0;i<12;i++)
+	printf("%02x",buf[i]);
+	printf("\r\n");
 }
-
-
-u8 ReadGiftNumFromFlash(void)
+void ReadFlashSize(void)
 {
-	return (u8)FLASH_ReadWord(GIFT_Base);
+	u16 buffer=0;
+	buffer = *(__IO uint16_t*)FLASH_SIZE_BASE;
+	printf("MCU flash size:%d k\r\n",buffer);
 }
-
 void WriteUpdateFlag(u32 flag)
 {
 	u32 address;
@@ -64,18 +83,6 @@ void WriteUpdateFlag(u32 flag)
 	FLASH_ErasePage(address);
 	FLASH_ProgramWord((u32)address,(u32)(flag));
 	FLASH_Lock();
-}
-
-void GiftRecord(void)
-{
-	if(Gift.GiftIsOutFlag)
-		{
-			Gift.giftnum=ReadGiftNumFromFlash();
-		  Gift.giftnum--;
-			WriteGiftNumToFlash(&Gift.giftnum);
-		  printf("GIFT IS OUT!\x0d\x0a");
-			Gift.GiftIsOutFlag = 0 ;
-		}
 }
 
 

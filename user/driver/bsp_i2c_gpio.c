@@ -21,7 +21,7 @@
 */
 
 #include "bsp_i2c_gpio.h"
-
+#include "timer.h"
 /*
 	安富莱STM32-V5开发板 i2c总线GPIO:
  		PH4/I2C2_SCL
@@ -72,10 +72,14 @@ void bsp_InitI2C(void)
 *	返 回 值: 无
 *********************************************************************************************************
 */
+#define USE_HARD_DELAY
 static void i2c_Delay(void)
 {
+#ifdef USE_HARD_DELAY
+	
+	delay_us(1);
+#else
 	uint8_t i;
-
 	/*　
 		CPU主频168MHz时，在内部Flash运行, MDK工程不优化。用台式示波器观测波形。
 		循环次数为5时，SCL频率 = 1.78MHz (读耗时: 92ms, 读写正常，但是用示波器探头碰上就读写失败。时序接近临界)
@@ -87,6 +91,7 @@ static void i2c_Delay(void)
 		实际应用选择400KHz左右的速率即可
 	*/
 	for (i = 0; i < 30; i++);
+#endif
 }
 
 /*

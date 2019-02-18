@@ -36,9 +36,50 @@ FT5X06_T g_tFT5X06;
 /* 定义GPIO端口 */
 #define PORT_TP_INT	GPIOB
 #define PIN_TP_INT	GPIO_Pin_1
-
+typedef struct tp_reg
+{
+	u8 reg_addr;
+	u8 reg_value;
+}reg_t;
+reg_t ft5x16_reg_config[]=
+{
+	{0x00,0x00},//device mode
+	{0x80,0x10},//ID_G_THGROUP
+	{0x81,0x3c},//ID_G_THPEAK
+	{0x82,0x0f},//ID_G_THCAL
+	{0x83,0x3c},//ID_G_THWATER
+	{0x84,0x0a},//ID_G_THTEMP
+	{0x85,0x14},//ID_G_THDIFF
+	{0x86,0x01},//ID_G_CTRL
+	{0x87,0x02},//ID_G_TIMER_ENTER_MONITOR
+	{0x88,0x0c},//ID_G_PERIODACTIVE
+	{0x89,0x28},//ID_G_PERIODMONITOR
+	
+	{0xA0,0x01},//ID_G_AUTO_CLB_MODE
+	{0xA4,0x00},//ID_G_MODE
+	{0xA5,0x00},//ID_G_PMODE
+	{0xA7,0x01},//ID_G_STATE
+	{0xAA,0X00},//ID_G_AUTO_CLB
+		
+};
 static void FT5X06_ReadReg(uint16_t _usRegAddr, uint8_t *_pRegBuf, uint8_t _ucLen);
+static void ft5x16_write_reg(u8 reg_addr, u8 reg_value);
 GUI_PID_STATE State;
+
+
+void ft5x16_reg_init(void)
+{
+	u8 i=0;
+	uint8_t reg_value;
+	u8 arr_size = sizeof(ft5x16_reg_config)/sizeof(reg_t);
+	for(i=0;i<arr_size;i++)
+	{
+  	ft5x16_write_reg(ft5x16_reg_config[i].reg_addr,ft5x16_reg_config[i].reg_value);
+		FT5X06_ReadReg(ft5x16_reg_config[i].reg_addr, &reg_value, 1);
+		printf("... 0x%02X = 0x%02X\r\n", ft5x16_reg_config[i].reg_addr, reg_value);
+	}
+	
+}
 /*
 *********************************************************************************************************
 *	函 数 名: FT5X06_InitHard
@@ -49,17 +90,12 @@ GUI_PID_STATE State;
 */
 void FT5X06_InitHard(void)
 {	
-	/* 配置触摸笔中断引脚为输入 */
-	{
 		GPIO_InitTypeDef GPIO_InitStructure;
-
-		/* 第2步：配置所有的按键GPIO为浮动输入模式(实际上CPU复位后就是输入状态) */
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;		/* 设为输入口 */
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;		
 		GPIO_InitStructure.GPIO_Pin = PIN_TP_INT;
 		GPIO_Init(PORT_TP_INT, &GPIO_InitStructure);		
-	}
 	
-#if 1	/* 打印全部的寄存器数据 for debug */
+#if 0	/* 打印全部的寄存器数据 for debug */
 	{
 		uint8_t i;
 		uint8_t reg_value;
@@ -95,7 +131,7 @@ void FT5X06_InitHard(void)
 		printf_dbg("[FTS] touch threshold is %d.\r\n", reg_value * 4);
 	}
 #endif	
-	
+	ft5x16_reg_init();
 	g_tFT5X06.TimerCount = 0;
 	g_tFT5X06.Enable = 1;
 }
@@ -159,7 +195,23 @@ static void FT5X06_ReadReg(uint16_t _usRegAddr, uint8_t *_pRegBuf, uint8_t _ucLe
 
     i2c_Stop();							/* 总线停止信号 */
 }
-
+/*
+ set reg value
+*/
+static void ft5x16_write_reg(u8 reg_addr, u8 reg_value)
+{
+	i2c_Start();					/* 总线开始信号 */
+	i2c_SendByte(FT5X06_I2C_ADDR);	/* 发送设备地址+写信号 */
+	i2c_WaitAck();
+	
+	i2c_SendByte(reg_addr);		/* addr */
+	i2c_WaitAck();
+	
+	i2c_SendByte(reg_value);		/* data*/
+	i2c_WaitAck();
+	
+	i2c_Stop();							/* 总线停止信号 */
+}
 /*
 *********************************************************************************************************
 *	函 数 名: FT5X06_Timer1ms
@@ -301,7 +353,7 @@ void FT5X06_OnePiontScan(void)
 		GUI_PID_StoreState(&State);	
 	}
 
-#if 0
+#if 1
 	for (i = 0; i < CFG_POINT_READ_BUF; i++)
 	{
 		printf("%02X ", buf[i]);

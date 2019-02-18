@@ -337,7 +337,7 @@ void tempratrue_measure_callback( xTimerHandle  xTimer )
 void tempratrue_measure_timer_init(void)
 {
 	if(xTimer_tempratrue_measure_timer == NULL)
-        xTimer_tempratrue_measure_timer = xTimerCreate("xTimer_tempratrue_measure_timer ",  (5*1000)/portTICK_RATE_MS, pdTRUE, ( void * ) 0, tempratrue_measure_callback);
+        xTimer_tempratrue_measure_timer = xTimerCreate("xTimer_tempratrue_measure_timer ",  (1*1000)/portTICK_RATE_MS, pdTRUE, ( void * ) 0, tempratrue_measure_callback);
 	if(xTimer_tempratrue_measure_timer != NULL)
 				xTimerStart( xTimer_tempratrue_measure_timer, 0 );
 }

@@ -20,7 +20,9 @@
 #include "bsp_ts_ft5x06.h"
 #include "bsp_i2c_gpio.h"
 #include "bsp_touch.h"
-
+#include <stdlib.h>
+#include "adc.h"
+#include "cJSON.h"
 SemaphoreHandle_t  xMutex = NULL;
 QueueHandle_t public_queque = NULL;
 QueueHandle_t cc1101_queque = NULL;
@@ -29,6 +31,13 @@ EventGroupHandle_t human_detect_event_group = NULL;
 void NVIC_Configuration(void)
 {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
+}
+void cJson_init(void)
+{
+	cJSON_Hooks hooks;
+	hooks.malloc_fn = pvPortMalloc;
+	hooks.free_fn = vPortFree;
+	cJSON_InitHooks(&hooks);
 }
 static void app_ObjCreate (void)
 {
@@ -51,7 +60,7 @@ void  app_printf(char *format, ...)
 }
 void bsp_init(void)
 {
-
+  u8 mcu_id[12];
 	SCB->VTOR = (FLASH_BASE|0x0000); /* Vector Table Relocation in Internal FLASH. */
 	RCC_Configuration(); 
 	SysTick_Configuration();
@@ -62,14 +71,17 @@ void bsp_init(void)
 	TIM3_Int_Init();
 	TIM2_Int_Init();
   ds18b20_init();
-  led_gpio_init();	
-	set_green_led(ON);
-	set_red_led(ON);
+  led_gpio_init();
 	biss_ir_init();
 	bsp_InitI2C();
 	TOUCH_InitHard();
+	Adc_Init();
+	
+	Read_MCU_ID(mcu_id,sizeof(mcu_id));
+	ReadFlashSize();
 	
 }
+
 static void gui_task(void *pvParameters)
 {
 	while (1) 
@@ -77,6 +89,8 @@ static void gui_task(void *pvParameters)
 		MainTask();
 	}
 }
+
+
 void human_detect_task(void* param )
 {
 	uint16_t return_bits;
@@ -84,11 +98,9 @@ void human_detect_task(void* param )
 	{
 		
 		return_bits = xEventGroupWaitBits(human_detect_event_group, EVENT_IR_DETECTED,  pdTRUE,  pdFALSE,  portMAX_DELAY);
-		if((return_bits & EVENT_IR_DETECTED) == EVENT_IR_DETECTED)
+		if((return_bits & EVENT_IR_DETECTED) == EVENT_IR_DETECTED) 
 		{
-			GPIO_WriteBit(LCD_BL_GPIO,LCD_BL_PIN,Bit_SET);
-			if(ir_timer != NULL)
-			   xTimerReset(ir_timer,0);
+
 		}
 		vTaskDelay(100 / portTICK_RATE_MS);
 	}
@@ -105,9 +117,11 @@ void tp_task(void *param)
 		vTaskDelay(10 / portTICK_RATE_MS);
 	}
 }
+
 int main(void)
 {
 		app_ObjCreate();
+	  cJson_init();
 		bsp_init();
 		app_printf("bsp_init ok!\n");
 		xTaskCreate(uart_task,"uart_task",256,NULL,6,NULL);
@@ -117,6 +131,7 @@ int main(void)
 		xTaskCreate(led_task,"alive_check_task",256,NULL,6,NULL);
 		xTaskCreate(cc1101_task,"cc1101_task",1024,NULL,7,NULL);
 		xTaskCreate(tp_task,"tp_task",256,NULL,7,NULL);
+		xTaskCreate(adc_task,"adc_task",256,NULL,5,NULL);
 		vTaskStartScheduler();
 		
 }

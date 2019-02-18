@@ -35,7 +35,6 @@ u8 key_scan(void)
 	u8 i=3;
 	while(i--)
 	{
-
 		key_value |= ((GPIO_ReadInputDataBit(KEY1_GPIO,KEY1_PIN)==0)?1:0)<<0;
 		key_value |= ((GPIO_ReadInputDataBit(KEY2_GPIO,KEY2_PIN)==0)?1:0)<<1;
 		key_value |= ((GPIO_ReadInputDataBit(KEY3_GPIO,KEY3_PIN)==0)?1:0)<<2;
@@ -57,7 +56,7 @@ void key_deal(u8 *key_value)
 			printf("key 2 pressed \n");
 			break;
 		case KEY3_PRESSED:
-			//user_reset();
+			user_reset();
 			printf("key 3 pressed \n");
 			break;
 		

@@ -30,6 +30,7 @@
 #include "task.h"
 #include "main.h"
 #include "bsp_ds18b20.h"
+#include "adc.h"
 /*********************************************************************
 *
 *       Defines
@@ -45,10 +46,12 @@
 #define ID_TEXT_4     (GUI_ID_USER + 0x07)
 #define ID_TEXT_5     (GUI_ID_USER + 0x08)
 #define ID_TEXT_6     (GUI_ID_USER + 0x08)
+#define ID_TEXT_7    (GUI_ID_USER + 0x09)
 
 #define WM_USER_SET_TO_CHANGED_BY_APP (WM_USER + 0X01)
 #define WM_USER_WIFI_STATUS_CHANGED   (WM_USER + 0X02)
 #define WM_USER_CURRENT_TEMP_CHANGED   (WM_USER + 0X03)
+#define WM_USER_CURRENT_BATT_CHANGED   (WM_USER + 0X04)
 
 // USER START (Optionally insert additional defines)
 // USER END
@@ -77,6 +80,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { TEXT_CreateIndirect, "wifi disconnected", ID_TEXT_4, 380, 0, 100, 20, 0, 0x0, 0 },
   { TEXT_CreateIndirect, "\xb0\x43", ID_TEXT_5, 330, 91, 55, 57, 0, 0x0, 0 },
   { TEXT_CreateIndirect, "\xb0\x43", ID_TEXT_6, 290, 212, 51, 28, 0, 0x0, 0 },
+	{ TEXT_CreateIndirect, "00%", ID_TEXT_7, 300, 0, 50, 20, 0, 0x0, 0 },
   // USER START (Optionally insert additional widgets)
   // USER END
 };
@@ -95,6 +99,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 *
 *       _cbDialog
 */
+#define GRID (180)
 static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
   int     NCode;
@@ -102,7 +107,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   char	  set_to[10];
   char	  current_temp[10];
   int	  set_temprature;
- 
+	char	  current_batt[10];
   // USER START (Optionally insert additional variables)
   // USER END
   
@@ -144,6 +149,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     //
     hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
     TEXT_SetFont(hItem, GUI_FONT_13B_1);
+		TEXT_SetTextColor(hItem,GUI_WHITE);
     TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
     // USER START (Optionally insert additional code for further widget initialization)
 	 hItem = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_0);
@@ -155,6 +161,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
      TEXT_SetFont(hItem, GUI_FONT_20B_1);
      TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
     // USER END
+		
+		//
+    // Initialization of 'batt percent '
+    //
+    hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+    TEXT_SetFont(hItem, GUI_FONT_13B_1);
+		TEXT_SetTextColor(hItem,GUI_WHITE);
+    TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
     break;
   case WM_NOTIFY_PARENT:
     Id    = WM_GetId(pMsg->hWinSrc);
@@ -208,13 +222,21 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 	case WM_USER_CURRENT_TEMP_CHANGED:
 		  hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
 		  memset(current_temp,0,sizeof(current_temp));
-		  sprintf(current_temp,"%d",tempratrue_now/16);
+	    //printf("tempratrue_now:%d \r\n",tempratrue_now);
+		  sprintf(current_temp,"%02d",tempratrue_now/16);
 		  TEXT_SetText(hItem,current_temp);
 		  hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
 		  memset(current_temp,0,sizeof(current_temp));
-		  sprintf(current_temp,".%d",(int)((tempratrue_now%16)*10/16));
+		  sprintf(current_temp,".%01d",(int)((tempratrue_now%16)*10/16));
 		  TEXT_SetText(hItem,current_temp);
 		break;
+	case WM_USER_CURRENT_BATT_CHANGED:
+		  hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+		  memset(current_batt,0,sizeof(current_batt));
+		  sprintf(current_batt,"%d%%",PERCENT(adc_value));
+	    TEXT_SetText(hItem,current_batt);
+		break;
+		
   // USER END
   default:
     WM_DefaultProc(pMsg);
@@ -265,6 +287,10 @@ void MainTask(void)
                 {
 									WM_SendMessageNoPara(ClientWindow, WM_USER_CURRENT_TEMP_CHANGED);
 								}
+			if(strncmp(buf,"batt_changed",strlen("batt_changed")) == 0)
+                {
+									WM_SendMessageNoPara(ClientWindow, WM_USER_CURRENT_BATT_CHANGED);
+								}					
 		}
 		
 		GUI_Delay(100);
