@@ -485,14 +485,14 @@
               <FilePath>..\user\driver\bsp_touch.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_ts_ft5x06.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\user\driver\bsp_ts_ft5x06.c</FilePath>
-            </File>
-            <File>
               <FileName>adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\driver\adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gt911.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\bsp_gt911.c</FilePath>
             </File>
           </Files>
         </Group>

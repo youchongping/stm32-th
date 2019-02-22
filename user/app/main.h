@@ -6,9 +6,8 @@
 #define FIREWARE_VERSION "ver1.0.0d"
 
 #define EVENT_IR_DETECTED  (1<<0)
+#define EVENT_TP_DETECTED  (1<<1)
 
-
-extern void  app_printf(char *format, ...);
 
 extern SemaphoreHandle_t  xMutex ;
 extern QueueHandle_t public_queque ;

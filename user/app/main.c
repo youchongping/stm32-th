@@ -17,7 +17,7 @@
 #include "event_groups.h"
 #include "biss_ir.h"
 #include "lcd.h"
-#include "bsp_ts_ft5x06.h"
+#include "bsp_gt911.h"
 #include "bsp_i2c_gpio.h"
 #include "bsp_touch.h"
 #include <stdlib.h>
@@ -47,17 +47,7 @@ static void app_ObjCreate (void)
   cc1101_event_group = xEventGroupCreate();
 	human_detect_event_group = xEventGroupCreate();
 }
-void  app_printf(char *format, ...)
-{
-    char  buf_str[200 + 1];
-    va_list   v_args;
-    va_start(v_args, format);
-   (void)vsnprintf((char*)&buf_str[0],(size_t) sizeof(buf_str),(char const *) format,v_args);
-    va_end(v_args);
-		xSemaphoreTake(xMutex, portMAX_DELAY);
-    printf("%s", buf_str);
-   	xSemaphoreGive(xMutex);
-}
+
 void bsp_init(void)
 {
   u8 mcu_id[12];
@@ -107,12 +97,12 @@ void human_detect_task(void* param )
 }
 
 void tp_task(void *param)
-{  
+{ 
   while(1)
    {
-		if(g_tFT5X06.Enable == 1)
+		if(g_GT911.Enable == 1)
 		{
-				FT5X06_OnePiontScan();
+				GT911_OnePiontScan();
 		}
 		vTaskDelay(10 / portTICK_RATE_MS);
 	}
@@ -123,7 +113,6 @@ int main(void)
 		app_ObjCreate();
 	  cJson_init();
 		bsp_init();
-		app_printf("bsp_init ok!\n");
 		xTaskCreate(uart_task,"uart_task",256,NULL,6,NULL);
 		xTaskCreate(human_detect_task,"human_detect_task",256,NULL,6,NULL);
 		xTaskCreate(gui_task,"gui_task",2048,NULL,2,NULL);

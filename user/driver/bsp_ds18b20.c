@@ -1,19 +1,4 @@
-/*
-*********************************************************************************************************
-*
-*	模块名称 : DS18B20 驱动模块(1-wire 数字温度传感器）
-*	文件名称 : bsp_ds18b20.c
-*	版    本 : V1.0
-*	说    明 : DS18B20和CPU之间采用1个GPIO接口。
-*
-*	修改记录 :
-*		版本号  日期         作者     说明
-*		V1.0    2014-01-24  armfly  正式发布
-*
-*	Copyright (C), 2013-2014, 安富莱电子 www.armfly.com
-*
-*********************************************************************************************************
-*/
+
 
 #include "bsp_ds18b20.h"
 #include "FreeRTOS.h"
@@ -23,14 +8,6 @@
 #include "timers.h"
 #include "main.h"
 #include <stdio.h>
-/*
-	DS18B20 可以直接查到STM32-V5开发板的U16 (3P) 插座.
-
-    DS18B20     STM32F407开发板
-	  VCC   ------  3.3V
-	  DQ    ------  PB1   (开发板上有 4.7K 上拉电阻)
-	  GND   ------  GND
-*/
 
 /* 定义GPIO端口 */
 #define RCC_DQ		RCC_AHB1Periph_GPIOE
@@ -348,4 +325,4 @@ void ds18b20_init(void)
 	tempratrue_now = DS18B20_ReadTempReg();
 	if(xQueueSend(public_queque, (void *)"temp_changed", 0) == pdPASS){}
 }
-/***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/
+
