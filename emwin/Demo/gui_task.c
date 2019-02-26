@@ -85,6 +85,13 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   // USER END
 };
  static int temp=0;
+const GUI_COLOR choose_color[]=
+{
+	GUI_BLUE,
+	GUI_GREEN,
+	GUI_RED,
+	GUI_CYAN,
+};
 /*********************************************************************
 *
 *       Static code
@@ -119,6 +126,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     //
     hItem = pMsg->hWin;
     WINDOW_SetBkColor(hItem, GUI_MAKE_COLOR(GUI_DARKRED));
+	//calendar
+		hItem = pMsg->hWin;
+	  CALENDAR_Create(hItem,0,0,2019,02,26,2,1,1);
+	//chose color
+	  //CHOOSECOLOR_Create(hItem,0,0,480,320,choose_color,sizeof(choose_color),1,1,"chs",1);
     //
     // Initialization of '00'
     //
@@ -126,24 +138,28 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     TEXT_SetFont(hItem, GUI_FONT_D80);
     TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
     TEXT_SetTextColor(hItem, GUI_MAKE_COLOR(0x00000000));
+		TEXT_SetTextColor(hItem,GUI_WHITE);
     //
     // Initialization of '.0'
     //
     hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
     TEXT_SetFont(hItem, GUI_FONT_D48);
     TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+		TEXT_SetTextColor(hItem,GUI_WHITE);
     //
     // Initialization of '00.0'
     //
     hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
     TEXT_SetFont(hItem, GUI_FONT_20B_1);
     TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+		TEXT_SetTextColor(hItem,GUI_WHITE);
     //
     // Initialization of 'set to:'
     //
     hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
     TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
     TEXT_SetFont(hItem, GUI_FONT_20B_1);
+		TEXT_SetTextColor(hItem,GUI_WHITE);
     //
     // Initialization of 'wifi disconnect'
     //
@@ -152,14 +168,20 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		TEXT_SetTextColor(hItem,GUI_WHITE);
     TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
     // USER START (Optionally insert additional code for further widget initialization)
+		
+		//slider bar
 	 hItem = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_0);
-	 SLIDER_SetRange(hItem,0,500);
+	 SLIDER_SetRange(hItem,0,400);
+	 
 	 hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
      TEXT_SetFont(hItem, GUI_FONT_32B_1);
      TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
+		 TEXT_SetTextColor(hItem,GUI_WHITE);
+		 
 	 hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
      TEXT_SetFont(hItem, GUI_FONT_20B_1);
      TEXT_SetTextAlign(hItem, GUI_TA_LEFT | GUI_TA_VCENTER);
+		 TEXT_SetTextColor(hItem,GUI_WHITE);
     // USER END
 		
 		//
@@ -217,6 +239,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		  else
 		  {
 			  TEXT_SetText(hItem,"wifi disconnected");
+				
 		  }
 		break;
 	case WM_USER_CURRENT_TEMP_CHANGED:

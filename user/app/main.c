@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include "adc.h"
 #include "cJSON.h"
+#include "bsp_spi_bus.h"
+#include "bsp_spi_flash.h"
 SemaphoreHandle_t  xMutex = NULL;
 QueueHandle_t public_queque = NULL;
 QueueHandle_t cc1101_queque = NULL;
@@ -66,14 +68,15 @@ void bsp_init(void)
 	bsp_InitI2C();
 	TOUCH_InitHard();
 	Adc_Init();
+	bsp_InitSFlash();
 	
 	Read_MCU_ID(mcu_id,sizeof(mcu_id));
-	ReadFlashSize();
-	
+	ReadFlashSize();	
 }
 
 static void gui_task(void *pvParameters)
 {
+
 	while (1) 
 	{
 		MainTask();

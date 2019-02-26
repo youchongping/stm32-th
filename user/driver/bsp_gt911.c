@@ -553,7 +553,7 @@
 		GUI_PID_StoreState(&State);
 	}
 
-	#if 1
+	#if 0
 	printf("X1:%5d,Y1:%5d\r\n", g_GT911.X1, g_GT911.Y1); //串口打印坐标值
 	#endif
 	}

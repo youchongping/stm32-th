@@ -494,6 +494,16 @@
               <FileType>1</FileType>
               <FilePath>..\user\driver\bsp_gt911.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_spi_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\bsp_spi_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_spi_bus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\driver\bsp_spi_bus.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -813,6 +823,36 @@
               <FileName>STemWin532_CM3_OS_Keil.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\emwin\Lib\STemWin532_CM3_OS_Keil.lib</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FileSystem_R13</GroupName>
+          <Files>
+            <File>
+              <FileName>diskio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ff13c\source\diskio.c</FilePath>
+            </File>
+            <File>
+              <FileName>ff.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ff13c\source\ff.c</FilePath>
+            </File>
+            <File>
+              <FileName>ffsystem.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ff13c\source\ffsystem.c</FilePath>
+            </File>
+            <File>
+              <FileName>ffunicode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ff13c\source\ffunicode.c</FilePath>
+            </File>
+            <File>
+              <FileName>user_ioctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ff13c\source\user_ioctrl.c</FilePath>
             </File>
           </Files>
         </Group>
