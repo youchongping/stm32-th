@@ -10,9 +10,10 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 #include "user_ioctrl.h"
+#include "bsp_spi_flash.h"
 /* Definitions of physical drive number for each drive */
-#define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
-#define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
+#define DEV_RAM		1	/* Example: Map Ramdisk to physical drive 0 */
+#define DEV_MMC		0	/* Example: Map MMC/SD card to physical drive 1 */
 #define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
 
@@ -74,7 +75,7 @@ DSTATUS disk_initialize (
 		return stat;
 
 	case DEV_MMC :
-		result = MMC_disk_initialize();
+		stat = MMC_disk_initialize();
 
 		// translate the reslut code here
 
@@ -202,7 +203,7 @@ DRESULT disk_ioctl (
 )
 {
 	DRESULT res;
-	int result;
+//	int result;
 
 	switch (pdrv) {
 	case DEV_RAM :
@@ -214,7 +215,27 @@ DRESULT disk_ioctl (
 	case DEV_MMC :
 
 		// Process of the command for the MMC/SD card
-
+   switch(cmd)
+	    {
+		    case CTRL_SYNC:
+				res = RES_OK; 
+		        break;	 
+		    case GET_SECTOR_SIZE:
+		        *(WORD*)buff = g_tSF.PageSize;
+		        res = RES_OK;
+		        break;	 
+		    case GET_BLOCK_SIZE:
+		        *(WORD*)buff = g_tSF.PageSize*8;
+		        res = RES_OK;
+		        break;	 
+		    case GET_SECTOR_COUNT:
+		        *(DWORD*)buff = g_tSF.TotalSize / g_tSF.PageSize;
+		        res = RES_OK;
+		        break;
+		    default:
+		        res = RES_PARERR;
+		        break;
+	    }
 		return res;
 
 	case DEV_USB :

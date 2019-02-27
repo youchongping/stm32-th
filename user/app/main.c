@@ -25,6 +25,7 @@
 #include "cJSON.h"
 #include "bsp_spi_bus.h"
 #include "bsp_spi_flash.h"
+
 SemaphoreHandle_t  xMutex = NULL;
 QueueHandle_t public_queque = NULL;
 QueueHandle_t cc1101_queque = NULL;

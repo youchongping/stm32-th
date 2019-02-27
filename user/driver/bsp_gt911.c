@@ -361,7 +361,7 @@
 	#define CONFIG_BY_IC
 	void GT911_InitHard(void)
 	{
-	uint8_t config_Checksum = 0,i;
+	//uint8_t config_Checksum = 0,i;
 	/* emWin默认是发给图层1，如果是发给图层2，请修改Layer参数为1 */
 	State.Layer = 0;
 	//g_GT911.i2c_addr = GT911_I2C_ADDR;

@@ -128,7 +128,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     WINDOW_SetBkColor(hItem, GUI_MAKE_COLOR(GUI_DARKRED));
 	//calendar
 		hItem = pMsg->hWin;
-	  CALENDAR_Create(hItem,0,0,2019,02,26,2,1,1);
+	  CALENDAR_Create(hItem,0,0,2019,02,27,2,1,1);
 	//chose color
 	  //CHOOSECOLOR_Create(hItem,0,0,480,320,choose_color,sizeof(choose_color),1,1,"chs",1);
     //
@@ -301,9 +301,6 @@ void MainTask(void)
 	ClientWindow = WM_GetClientWindow(hDlg);
 	while(1)
 	{
-		//WM_SendMessageNoPara(ClientWindow, WM_USER_SET_TO_CHANGED_BY_APP);
-		//WM_SendMessageNoPara(ClientWindow, WM_USER_WIFI_STATUS_CHANGED);
-		
 		while (xQueueReceive(public_queque, (void *) buf, 0) == pdTRUE)
 		{
 			if(strncmp(buf,"temp_changed",strlen("temp_changed")) == 0)
